@@ -184,23 +184,18 @@ function checar(s){
 if(/[?&]previa=1/i.test(location.search)) revelar();
 if(/[?&]previa=2/i.test(location.search)) revelar2();
 
-var achou=false, t=0;
-var busca=setInterval(function(){
-  t++;
-  var sp=window.smartplayer;
-  if(sp && sp.instances && sp.instances.length){
-    var inst=sp.instances[sp.instances.length-1];
-    if(inst && typeof inst.on==="function" && !achou){
-      achou=true;
-      inst.on("timeupdate",function(){
-        try{ checar((inst.video && inst.video.currentTime) || inst.currentTime || 0); }catch(e){}
-      });
-      inst.on("ended",function(){ revelar(); revelar2(); });
-      clearInterval(busca);
-    }
-  }
-  if(t>300) clearInterval(busca);
-},400);
+/* Verifica o tempo do vídeo a cada 0,5s direto no player (VTurb v4). Ignora a prévia muda (smart autoplay). */
+var maior=0;
+var relogio=setInterval(function(){
+  var p=document.querySelector("vturb-smartplayer");
+  if(!p) return;
+  var s=0;
+  try{ s = p.inSmartAutoPlay ? 0 : (Number(p.currentTime)||0); }catch(e){}
+  if(!s){ try{ var sp=window.smartplayer; var inst=sp&&sp.instances&&sp.instances[sp.instances.length-1]; if(inst&&inst.video&&!p.inSmartAutoPlay) s=Number(inst.video.currentTime)||0; }catch(e){} }
+  if(s>maior) maior=s;
+  checar(maior);
+  if(aberto && aberto2) clearInterval(relogio);
+},500);
 
 /* ---------- BLOQUEIOS: botão direito, arrastar, selecionar e atalhos de código ---------- */
 (function(){
